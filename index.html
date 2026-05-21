@@ -21,7 +21,9 @@
 
       window.difyChatbotConfig = {
         token: 'ZNGkaqpognWwHCzA',
-        inputs: {},
+        inputs: {
+          is_logged_in: loggedIn,
+        },
         systemVariables: loggedIn ? { user_id: userId } : {},
         userVariables: {},
       };
