@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dify Tester</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      color: #333;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a2e;
+      letter-spacing: -0.3px;
+    }
+
+    .logo span { color: #6c63ff; }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-badge {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.3px;
+    }
+
+    .status-badge.logged-out {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-badge.logged-in {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-login  { background: #6c63ff; color: #fff; }
+    .btn-login:hover  { background: #5a52d5; }
+    .btn-logout { background: #ef4444; color: #fff; }
+    .btn-logout:hover { background: #dc2626; }
+    .btn-apply  { background: #6c63ff; color: #fff; width: 100%; padding: 10px; margin-top: 12px; font-size: 14px; }
+    .btn-apply:hover { background: #5a52d5; }
+
+    /* ── Main ── */
+    main {
+      max-width: 760px;
+      margin: 36px auto;
+      padding: 0 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #6c63ff;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 14px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 140px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 12.5px;
+      font-family: 'Menlo', 'Courier New', monospace;
+      color: #374151;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.15s;
+      line-height: 1.6;
+    }
+
+    textarea:focus { border-color: #6c63ff; }
+    textarea::placeholder { color: #9ca3af; }
+
+    /* ── State panel ── */
+    .state-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .state-item {
+      background: #f8f9fb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+
+    .state-item label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 6px;
+    }
+
+    .state-value {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .state-value.is-logged-in  { color: #059669; }
+    .state-value.is-logged-out { color: #d97706; }
+    .state-value.is-user       { color: #6c63ff; font-family: monospace; }
+    .state-value.is-none       { color: #9ca3af; font-style: italic; }
+
+    /* user ID input (visible when logged in) */
+    .user-id-row {
+      margin-top: 14px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .user-id-row.visible { display: flex; }
+
+    .user-id-row label {
+      font-size: 13px;
+      color: #374151;
+      white-space: nowrap;
+      font-weight: 500;
+    }
+
+    .user-id-row input {
+      flex: 1;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 13px;
+      font-family: monospace;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .user-id-row input:focus { border-color: #6c63ff; }
+
+    /* ── Notice ── */
+    .notice {
+      font-size: 12.5px;
+      color: #6b7280;
+      line-height: 1.6;
+      background: #f8f9fb;
+      border-left: 3px solid #6c63ff;
+      padding: 10px 14px;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .notice code {
+      background: #ede9fe;
+      color: #5b21b6;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Dify<span>Tester</span></div>
+  <div class="header-right">
+    <span id="status-badge" class="status-badge"></span>
+    <button id="auth-btn" class="btn" onclick="toggleLogin()"></button>
+  </div>
+</header>
+
+<main>
+
+  <!-- State display -->
+  <div class="card">
+    <p class="card-title">現在の状態</p>
+    <div class="state-grid">
+      <div class="state-item">
+        <label>ログイン状態</label>
+        <div id="state-login" class="state-value"></div>
+      </div>
+      <div class="state-item">
+        <label>Dify へ送信する user</label>
+        <div id="state-user" class="state-value"></div>
+      </div>
+    </div>
+    <div id="user-id-row" class="user-id-row">
+      <label>User ID:</label>
+      <input id="user-id-input" type="text" value="test-user" placeholder="送信するユーザーID" oninput="updateStateDisplay()">
+    </div>
+  </div>
+
+  <!-- Code paste -->
+  <div class="card">
+    <p class="card-title">Dify 埋め込みコード</p>
+    <textarea id="dify-code" placeholder="Dify の「埋め込む」から取得したコードを貼り付けてください。
+
+例:
+&lt;script&gt;
+  window.difyChatbotConfig = { token: 'YOUR_TOKEN' }
+&lt;/script&gt;
+&lt;script src=&quot;https://...&quot; id=&quot;YOUR_TOKEN&quot; defer&gt;&lt;/script&gt;"></textarea>
+    <button class="btn btn-apply" onclick="applyDifyCode()">適用する</button>
+    <div class="notice" style="margin-top:12px">
+      コードを貼り付けて「適用する」を押すと、現在のログイン状態に応じて
+      <code>window.difyChatbotConfig.user</code> を自動で設定して Dify チャットボットを起動します。
+    </div>
+  </div>
+
+</main>
+
+<script>
+  /* ── Cookie helpers ── */
+  function setCookie(name, value, days) {
+    const expires = new Date(Date.now() + days * 864e5).toUTCString();
+    document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+  }
+
+  function getCookie(name) {
+    const key = encodeURIComponent(name) + '=';
+    for (const part of document.cookie.split('; ')) {
+      if (part.startsWith(key)) return decodeURIComponent(part.slice(key.length));
+    }
+    return null;
+  }
+
+  function deleteCookie(name) {
+    document.cookie = `${encodeURIComponent(name)}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`;
+  }
+
+  function isLoggedIn() {
+    return getCookie('dify_tester_auth') === 'true';
+  }
+
+  /* ── UI update ── */
+  function updateStateDisplay() {
+    const loggedIn = isLoggedIn();
+    const badge    = document.getElementById('status-badge');
+    const btn      = document.getElementById('auth-btn');
+    const stateLogin = document.getElementById('state-login');
+    const stateUser  = document.getElementById('state-user');
+    const userIdRow  = document.getElementById('user-id-row');
+
+    if (loggedIn) {
+      badge.textContent = 'ログイン済み';
+      badge.className   = 'status-badge logged-in';
+      btn.textContent   = 'ログアウト';
+      btn.className     = 'btn btn-logout';
+
+      stateLogin.textContent = 'ログイン済み';
+      stateLogin.className   = 'state-value is-logged-in';
+
+      const userId = document.getElementById('user-id-input').value.trim() || 'test-user';
+      stateUser.textContent = `"${userId}"`;
+      stateUser.className   = 'state-value is-user';
+
+      userIdRow.classList.add('visible');
+    } else {
+      badge.textContent = '未ログイン';
+      badge.className   = 'status-badge logged-out';
+      btn.textContent   = 'ログイン';
+      btn.className     = 'btn btn-login';
+
+      stateLogin.textContent = '未ログイン';
+      stateLogin.className   = 'state-value is-logged-out';
+
+      stateUser.textContent = 'なし（未送信）';
+      stateUser.className   = 'state-value is-none';
+
+      userIdRow.classList.remove('visible');
+    }
+  }
+
+  /* ── Login / Logout ── */
+  function toggleLogin() {
+    if (isLoggedIn()) {
+      deleteCookie('dify_tester_auth');
+    } else {
+      setCookie('dify_tester_auth', 'true', 7);
+    }
+    updateStateDisplay();
+  }
+
+  /* ── Apply Dify code ── */
+  function applyDifyCode() {
+    const code = document.getElementById('dify-code').value.trim();
+    if (!code) {
+      alert('Dify の埋め込みコードを貼り付けてください。');
+      return;
+    }
+
+    // Remove any previously injected Dify elements
+    document.querySelectorAll('[data-dify-injected]').forEach(el => el.remove());
+
+    // Extract token from difyChatbotConfig
+    const tokenMatch = code.match(/token\s*:\s*['"`]([^'"`]+)['"`]/);
+    // Extract script src
+    const srcMatch = code.match(/src=["']([^"']+)["']/);
+
+    if (!srcMatch) {
+      alert('script タグの src が見つかりません。Dify の埋め込みコードをそのまま貼り付けてください。');
+      return;
+    }
+
+    const src   = srcMatch[1];
+    const token = tokenMatch ? tokenMatch[1] : '';
+
+    // Build config — add user only when logged in
+    const config = { token };
+    if (isLoggedIn()) {
+      const userId = document.getElementById('user-id-input').value.trim() || 'test-user';
+      config.user = userId;
+    }
+
+    // Inject config script
+    const configScript = document.createElement('script');
+    configScript.setAttribute('data-dify-injected', '');
+    configScript.textContent = `window.difyChatbotConfig = ${JSON.stringify(config)};`;
+    document.head.appendChild(configScript);
+
+    // Inject embed script
+    const embedScript = document.createElement('script');
+    embedScript.setAttribute('data-dify-injected', '');
+    embedScript.src   = src;
+    embedScript.defer = true;
+    document.body.appendChild(embedScript);
+  }
+
+  // Init on load
+  updateStateDisplay();
+</script>
+
+</body>
+</html>
