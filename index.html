@@ -344,7 +344,7 @@
     }
 
     // Populate config form
-    let inputs = { is_logged_in: false, hoge: 'hhhh' };
+    let inputs = { is_logged_in: "False", hoge: 'hhhh' };
     try {
       const saved = JSON.parse(localStorage.getItem('dify_inputs'));
       if (saved && typeof saved === 'object') inputs = saved;
