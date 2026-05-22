@@ -16,13 +16,13 @@
         return null;
       }
 
-      const loggedIn = getCookie('dify_tester_auth') === 'true';
+      const loggedIn = true;
       const userId   = getCookie('dify_tester_user_id') || 'test-user';
 
       window.difyChatbotConfig = {
         token: 'zjGMPbx4WpS2RhER',
         inputs: {
-          is_logged_in: 'true',
+          is_logged_in: loggedIn,
         },
         systemVariables: loggedIn ? { user_id: userId } : {},
         userVariables: {},
