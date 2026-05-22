@@ -7,30 +7,21 @@
 
   <!-- Dify config — must run before embed script -->
   <script>
-    (function () {
-      function getCookie(name) {
-        const key = encodeURIComponent(name) + '=';
-        for (const part of document.cookie.split('; ')) {
-          if (part.startsWith(key)) return decodeURIComponent(part.slice(key.length));
-        }
-        return null;
-      }
-
-      const loggedIn = true;
-      const userId   = getCookie('dify_tester_user_id') || 'test-user';
-
-      window.difyChatbotConfig = {
-        token: 'zjGMPbx4WpS2RhER',
-        inputs: {
-          is_logged_in: "abc",
-          hoge: "fuga"
-        },
-        systemVariables: loggedIn ? { user_id: userId } : {},
-        userVariables: {
-          hoge: 'fuga'
-        },
-      };
-    })();
+    window.difyChatbotConfig = {
+      token: 'zjGMPbx4WpS2RhER',
+      inputs: {
+        is_logged_in: "",
+        hoge: "",
+      },
+      systemVariables: {
+        // user_id: 'YOU CAN DEFINE USER ID HERE',
+        // conversation_id: 'YOU CAN DEFINE CONVERSATION ID HERE, IT MUST BE A VALID UUID',
+      },
+      userVariables: {
+        // avatar_url: 'YOU CAN DEFINE USER AVATAR URL HERE',
+        // name: 'YOU CAN DEFINE USER NAME HERE',
+      },
+    };
   </script>
   <script src="https://udify.app/embed.min.js" id="zjGMPbx4WpS2RhER" defer></script>
   <style>
