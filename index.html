@@ -290,21 +290,6 @@
     return getCookie('dify_tester_auth') === 'true';
   }
 
-  /* ── Dify embed reload ── */
-  function reloadDifyEmbed() {
-    const token = 'zjGMPbx4WpS2RhER';
-    ['dify-chatbot-bubble-button', 'dify-chatbot-bubble-window'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.remove();
-    });
-    const old = document.getElementById(token);
-    if (old) old.remove();
-    const script = document.createElement('script');
-    script.src = 'https://udify.app/embed.min.js';
-    script.id = token;
-    document.body.appendChild(script);
-  }
-
   /* ── Apply config ── */
   function applyConfig() {
     const textarea = document.getElementById('cfg-inputs');
@@ -330,9 +315,7 @@
       deleteCookie('dify_tester_user_id');
     }
 
-    setupDifyConfig({ inputs, userId });
-    reloadDifyEmbed();
-    updateUI();
+    location.reload();
   }
 
   /* ── UI update ── */
