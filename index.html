@@ -304,9 +304,7 @@
 
   /* ── iframe の src を書き換えて inputs を反映 ── */
   function updateDifyEmbed() {
-    const windowEl = document.getElementById('dify-chatbot-bubble-window');
-    if (!windowEl) return;
-    const iframe = windowEl.querySelector('iframe');
+    const iframe = document.getElementById('dify-chatbot-bubble-window');
     if (!iframe) return;
 
     const inputs = window.difyChatbotConfig?.inputs || {};
