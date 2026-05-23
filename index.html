@@ -306,10 +306,27 @@
     return getCookie('dify_tester_auth') === 'true';
   }
 
-  /* ── Dify chatbot refresh ── */
-  function refreshDifyChatbot() {
-    localStorage.removeItem('conversationIdInfo');
-    location.reload();
+  /* ── Dify embed 再起動（ボタン削除 → スクリプト再挿入） ── */
+  function reloadDifyEmbed() {
+    ['dify-chatbot-bubble-button', 'dify-chatbot-bubble-window'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    });
+    const old = document.getElementById('zjGMPbx4WpS2RhER');
+    if (old) old.remove();
+    const script = document.createElement('script');
+    script.src = 'https://udify.app/embed.min.js';
+    script.id  = 'zjGMPbx4WpS2RhER';
+    document.body.appendChild(script);
+  }
+
+  /* ── 会話リセット：user_id にタイムスタンプを付与して別会話として扱わせる ── */
+  function resetConversation() {
+    const baseUserId = getCookie('dify_tester_user_id') || '';
+    const sessionUserId = (baseUserId || 'user') + '-' + Date.now();
+    const currentInputs = window.difyChatbotConfig ? { ...window.difyChatbotConfig.inputs } : {};
+    setupDifyConfig({ inputs: currentInputs, userId: sessionUserId });
+    reloadDifyEmbed();
   }
 
   /* ── Apply config ── */
@@ -337,7 +354,9 @@
       deleteCookie('dify_tester_user_id');
     }
 
-    refreshDifyChatbot();
+    setupDifyConfig({ inputs, userId });
+    reloadDifyEmbed();
+    updateUI();
   }
 
   /* ── UI update ── */
