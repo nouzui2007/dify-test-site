@@ -19,7 +19,7 @@
       window.difyChatbotConfig = {
         token: 'zjGMPbx4WpS2RhER',
         inputs: opts.inputs || {},
-        systemVariables: opts.userId ? { user_id: opts.userId } : {},
+        systemVariables: opts.userId ? { user_id: opts.userId + Date.now() } : {},
         userVariables: {},
       };
     }
