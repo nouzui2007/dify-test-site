@@ -310,7 +310,7 @@
     const inputs = window.difyChatbotConfig?.inputs || {};
     const params = new URLSearchParams();
     Object.entries(inputs).forEach(([key, value]) => {
-      params.set(key, btoa(String(value)));
+      params.set(key, btoa(unescape(encodeURIComponent(String(value)))));
     });
 
     iframe.src = `https://udify.app/chatbot/zjGMPbx4WpS2RhER?${params.toString()}`;
