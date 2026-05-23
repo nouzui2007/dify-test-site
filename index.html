@@ -19,7 +19,7 @@
       window.difyChatbotConfig = {
         token: 'zjGMPbx4WpS2RhER',
         inputs: opts.inputs || {},
-        systemVariables: opts.userId ? { user_id: opts.userId + Date.now() } : {},
+        systemVariables: opts.userId ? { user_id: opts.userId } : {},
         userVariables: {},
       };
     }
@@ -302,7 +302,23 @@
     return getCookie('dify_tester_auth') === 'true';
   }
 
-  /* ── Dify embed 再起動（ボタン削除 → スクリプト再挿入） ── */
+  /* ── iframe の src を書き換えて inputs を反映 ── */
+  function updateDifyEmbed() {
+    const windowEl = document.getElementById('dify-chatbot-bubble-window');
+    if (!windowEl) return;
+    const iframe = windowEl.querySelector('iframe');
+    if (!iframe) return;
+
+    const inputs = window.difyChatbotConfig?.inputs || {};
+    const params = new URLSearchParams();
+    Object.entries(inputs).forEach(([key, value]) => {
+      params.set(key, btoa(String(value)));
+    });
+
+    iframe.src = `https://udify.app/chatbot/zjGMPbx4WpS2RhER?${params.toString()}`;
+  }
+
+  /* ── Dify embed 要素削除 ── */
   function removeDifyEmbed() {
     ['dify-chatbot-bubble-button', 'dify-chatbot-bubble-window'].forEach(id => {
       const el = document.getElementById(id);
