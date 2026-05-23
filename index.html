@@ -7,21 +7,31 @@
 
   <!-- Dify config — must run before embed script -->
   <script>
-    window.difyChatbotConfig = {
-      token: 'zjGMPbx4WpS2RhER',
-      inputs: {
-        is_logged_in: "False",
-        hoge: "fuga",
-      },
-      systemVariables: {
-        // user_id: 'YOU CAN DEFINE USER ID HERE',
-        // conversation_id: 'YOU CAN DEFINE CONVERSATION ID HERE, IT MUST BE A VALID UUID',
-      },
-      userVariables: {
-        // avatar_url: 'YOU CAN DEFINE USER AVATAR URL HERE',
-        // name: 'YOU CAN DEFINE USER NAME HERE',
-      },
-    };
+    function getCookie(name) {
+      const key = encodeURIComponent(name) + '=';
+      for (const part of document.cookie.split('; ')) {
+        if (part.startsWith(key)) return decodeURIComponent(part.slice(key.length));
+      }
+      return null;
+    }
+
+    function setupDifyConfig(opts) {
+      window.difyChatbotConfig = {
+        token: 'zjGMPbx4WpS2RhER',
+        inputs: opts.inputs || {},
+        systemVariables: opts.userId ? { user_id: opts.userId } : {},
+        userVariables: {},
+      };
+    }
+
+    (function () {
+      let inputs = { is_logged_in: 'False', hoge: 'fuga' };
+      try {
+        const saved = JSON.parse(localStorage.getItem('dify_inputs'));
+        if (saved && typeof saved === 'object') inputs = saved;
+      } catch (e) {}
+      setupDifyConfig({ inputs, userId: getCookie('dify_tester_user_id') || '' });
+    })();
   </script>
   <script src="https://udify.app/embed.min.js" id="zjGMPbx4WpS2RhER" defer></script>
   <style>
@@ -88,17 +98,20 @@
       transition: background 0.15s, transform 0.1s;
     }
 
-    .btn:active { transform: scale(0.97); }
-    .btn-login:hover  { background: #5a52d5; }
+    .btn:active      { transform: scale(0.97); }
+    .btn-login       { background: #6c63ff; color: #fff; }
+    .btn-login:hover { background: #5a52d5; }
+    .btn-logout       { background: #ef4444; color: #fff; }
     .btn-logout:hover { background: #dc2626; }
-    .btn-login  { background: #6c63ff; color: #fff; }
-    .btn-logout { background: #ef4444; color: #fff; }
 
     /* ── Main ── */
     main {
       max-width: 760px;
       margin: 36px auto;
       padding: 0 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
 
     .card {
@@ -147,47 +160,59 @@
     .state-value.is-user       { color: #6c63ff; font-family: monospace; }
     .state-value.is-none       { color: #9ca3af; font-style: italic; }
 
-    /* user ID row */
-    .user-id-row {
-      margin-top: 14px;
-      display: none;
-      align-items: center;
-      gap: 10px;
+    /* ── Config panel ── */
+    .config-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
     }
 
-    .user-id-row.visible { display: flex; }
-
-    .user-id-row label {
-      font-size: 13px;
-      color: #374151;
-      white-space: nowrap;
-      font-weight: 500;
+    .config-field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 6px;
+      font-family: monospace;
     }
 
-    .user-id-row input {
-      flex: 1;
+    .config-field textarea,
+    .config-field input[type="text"] {
+      width: 100%;
       border: 1px solid #d1d5db;
       border-radius: 6px;
-      padding: 7px 10px;
-      font-size: 13px;
+      padding: 8px 10px;
+      font-size: 12px;
       font-family: monospace;
       outline: none;
       transition: border-color 0.15s;
+      resize: vertical;
     }
 
-    .user-id-row input:focus { border-color: #6c63ff; }
+    .config-field textarea:focus,
+    .config-field input[type="text"]:focus { border-color: #6c63ff; }
 
-    .btn-apply-user {
-      padding: 7px 14px;
+    .config-field textarea.error { border-color: #ef4444; }
+
+    .config-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-apply {
+      padding: 8px 20px;
       background: #6c63ff;
       color: #fff;
       border: none;
       border-radius: 6px;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.15s;
+      transition: background 0.15s, transform 0.1s;
     }
 
     .btn-apply:hover  { background: #5a52d5; }
@@ -236,7 +261,7 @@
         <div id="state-login" class="state-value"></div>
       </div>
       <div class="state-item">
-        <label>Dify へ送信する user_id</label>
+        <label>systemVariables.user_id</label>
         <div id="state-user" class="state-value"></div>
       </div>
     </div>
@@ -267,14 +292,6 @@
   function setCookie(name, value, days) {
     const expires = new Date(Date.now() + days * 864e5).toUTCString();
     document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
-  }
-
-  function getCookie(name) {
-    const key = encodeURIComponent(name) + '=';
-    for (const part of document.cookie.split('; ')) {
-      if (part.startsWith(key)) return decodeURIComponent(part.slice(key.length));
-    }
-    return null;
   }
 
   function deleteCookie(name) {
@@ -340,43 +357,31 @@
 
   /* ── UI update ── */
   function updateUI() {
-    const loggedIn   = isLoggedIn();
-    const userId     = getCookie('dify_tester_user_id') || 'test-user';
+    const loggedIn = isLoggedIn();
+    const userId   = getCookie('dify_tester_user_id') || '';
+
     const badge      = document.getElementById('status-badge');
     const btn        = document.getElementById('auth-btn');
     const stateLogin = document.getElementById('state-login');
     const stateUser  = document.getElementById('state-user');
-    const userIdRow  = document.getElementById('user-id-row');
-    const input      = document.getElementById('user-id-input');
 
-    if (loggedIn) {
-      badge.textContent = 'ログイン済み';
-      badge.className   = 'status-badge logged-in';
-      btn.textContent   = 'ログアウト';
-      btn.className     = 'btn btn-logout';
+    badge.textContent = loggedIn ? 'ログイン済み' : '未ログイン';
+    badge.className   = `status-badge ${loggedIn ? 'logged-in' : 'logged-out'}`;
+    btn.textContent   = loggedIn ? 'ログアウト' : 'ログイン';
+    btn.className     = `btn ${loggedIn ? 'btn-logout' : 'btn-login'}`;
 
-      stateLogin.textContent = 'ログイン済み';
-      stateLogin.className   = 'state-value is-logged-in';
+    stateLogin.textContent = loggedIn ? 'ログイン済み' : '未ログイン';
+    stateLogin.className   = `state-value ${loggedIn ? 'is-logged-in' : 'is-logged-out'}`;
 
+    if (userId) {
       stateUser.textContent = `"${userId}"`;
       stateUser.className   = 'state-value is-user';
-
-      input.value = userId;
-      userIdRow.classList.add('visible');
     } else {
-      badge.textContent = '未ログイン';
-      badge.className   = 'status-badge logged-out';
-      btn.textContent   = 'ログイン';
-      btn.className     = 'btn btn-login';
-
-      stateLogin.textContent = '未ログイン';
-      stateLogin.className   = 'state-value is-logged-out';
-
       stateUser.textContent = 'なし（未送信）';
       stateUser.className   = 'state-value is-none';
+    }
 
-    // Populate config form
-    let inputs = { is_logged_in: "False", hoge: 'hhhh' };
+    let inputs = { is_logged_in: 'False', hoge: 'fuga' };
     try {
       const saved = JSON.parse(localStorage.getItem('dify_inputs'));
       if (saved && typeof saved === 'object') inputs = saved;
@@ -392,13 +397,6 @@
     } else {
       setCookie('dify_tester_auth', 'true', 7);
     }
-    location.reload();
-  }
-
-  /* ── Apply User ID ── */
-  function applyUserId() {
-    const val = document.getElementById('user-id-input').value.trim() || 'test-user';
-    setCookie('dify_tester_user_id', val, 7);
     location.reload();
   }
 
