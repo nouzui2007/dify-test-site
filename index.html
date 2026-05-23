@@ -334,7 +334,7 @@
     const sessionUserId = (baseUserId || 'user') + '-' + Date.now();
     const currentInputs = window.difyChatbotConfig ? { ...window.difyChatbotConfig.inputs } : {};
     setupDifyConfig({ inputs: currentInputs, userId: sessionUserId });
-    removeDifyEmbed();
+    updateDifyEmbed();
     location.reload();
   }
 
@@ -364,7 +364,7 @@
     }
 
     setupDifyConfig({ inputs, userId });
-    removeDifyEmbed();
+    updateDifyEmbed();
     location.reload();
     // updateUI();
   }
