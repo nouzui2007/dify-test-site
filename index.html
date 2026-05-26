@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dify Tester</title>
 
-  <!-- Dify config — must run before embed script -->
   <script>
     function getCookie(name) {
       const key = encodeURIComponent(name) + '=';
@@ -14,27 +13,7 @@
       }
       return null;
     }
-
-    function setupDifyConfig(opts) {
-      window.difyChatbotConfig = {
-        token: 'zjGMPbx4WpS2RhER',
-        inputs: opts.inputs || {},
-        systemVariables: opts.userId ? { user_id: opts.userId } : {},
-        userVariables: {},
-      };
-    }
-
-    (function () {
-      let inputs = { is_logged_in: 'False', hoge: 'fuga' };
-      try {
-        const saved = JSON.parse(localStorage.getItem('dify_inputs'));
-        if (saved && typeof saved === 'object') inputs = saved;
-      } catch (e) {}
-      setupDifyConfig({ inputs, userId: getCookie('dify_tester_user_id') || '' });
-    })();
   </script>
-
-  <script src="https://udify.app/embed.min.js" id="zjGMPbx4WpS2RhER" defer></script>
 
   <!-- Markdown + Code highlight (CDN) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github.min.css">
@@ -68,8 +47,17 @@
     </div>
   </div>
 
+  <!-- 貼り付けるコード -->
   <div class="card" id="chat-card">
-    <p class="card-title">Chat</p>
+    <div class="chat-header">
+      <p class="card-title">Chat</p>
+      <button class="btn-reset-icon" onclick="resetChat()" title="会話リセット">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+        </svg>
+      </button>
+    </div>
     <div id="chat-messages"></div>
     <div id="chat-thinking" class="chat-thinking" style="display:none">
       <span></span><span></span><span></span>
@@ -82,12 +70,13 @@
       <button class="btn-apply" id="chat-send-btn" onclick="sendMessage()">送信</button>
     </div>
     <div class="chat-footer">
-      <button class="btn-reset" onclick="resetChat()">会話リセット</button>
       <span id="chat-conv-id" class="chat-conv-id"></span>
     </div>
   </div>
+
 </main>
 
+<!-- 製造したスクリプト -->
 <script src="app.js"></script>
 </body>
 </html>
