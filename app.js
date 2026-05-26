@@ -22,73 +22,6 @@ function isLoggedIn() {
   return getCookie('dify_tester_auth') === 'true';
 }
 
-/* ── iframe の src を書き換えて inputs を反映 ── */
-function updateDifyEmbed() {
-  const iframe = document.getElementById('dify-chatbot-bubble-window');
-  if (!iframe) return;
-
-  const inputs = window.difyChatbotConfig?.inputs || {};
-  const params = new URLSearchParams();
-  Object.entries(inputs).forEach(([key, value]) => {
-    params.set(key, btoa(unescape(encodeURIComponent(String(value)))));
-  });
-
-  iframe.src = `https://udify.app/chatbot/zjGMPbx4WpS2RhER?${params.toString()}`;
-}
-
-/* ── Dify embed 要素削除 ── */
-function removeDifyEmbed() {
-  ['dify-chatbot-bubble-button', 'dify-chatbot-bubble-window'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.remove();
-  });
-  const old = document.getElementById('zjGMPbx4WpS2RhER');
-  if (old) old.remove();
-}
-
-/* ── 会話リセット：user_id にタイムスタンプを付与して別会話として扱わせる ── */
-function resetConversation() {
-  const baseUserId = getCookie('dify_tester_user_id') || '';
-  const sessionUserId = (baseUserId || 'user') + '-' + Date.now();
-  const currentInputs = window.difyChatbotConfig ? { ...window.difyChatbotConfig.inputs } : {};
-  setupDifyConfig({ inputs: currentInputs, userId: sessionUserId });
-  updateDifyEmbed();
-  if (typeof resetChat === 'function') resetChat();
-}
-
-/* ── Apply config ── */
-function applyConfig() {
-  const textarea = document.getElementById('cfg-inputs');
-  const errEl    = document.getElementById('cfg-error');
-  const userId   = document.getElementById('cfg-user-id').value.trim();
-
-  let inputs;
-  try {
-    inputs = JSON.parse(textarea.value);
-    if (typeof inputs !== 'object' || Array.isArray(inputs)) throw new Error();
-  } catch (e) {
-    textarea.classList.add('error');
-    errEl.classList.add('visible');
-    return;
-  }
-  textarea.classList.remove('error');
-  errEl.classList.remove('visible');
-
-  localStorage.setItem('dify_inputs', JSON.stringify(inputs));
-  if (userId) {
-    setCookie('dify_tester_user_id', userId, 7);
-  } else {
-    deleteCookie('dify_tester_user_id');
-  }
-
-  const apiKey = document.getElementById('cfg-api-key').value.trim();
-  if (apiKey) localStorage.setItem('dify_api_key', apiKey);
-
-  if (typeof resetChat === 'function') resetChat();
-  setupDifyConfig({ inputs, userId });
-  updateDifyEmbed();
-}
-
 /* ── UI update ── */
 function updateUI() {
   const loggedIn = isLoggedIn();
@@ -114,16 +47,6 @@ function updateUI() {
     stateUser.textContent = 'なし（未送信）';
     stateUser.className   = 'state-value is-none';
   }
-
-  let inputs = { is_logged_in: 'False', hoge: 'fuga' };
-  try {
-    const saved = JSON.parse(localStorage.getItem('dify_inputs'));
-    if (saved && typeof saved === 'object') inputs = saved;
-  } catch (e) {}
-  document.getElementById('cfg-inputs').value = JSON.stringify(inputs, null, 2);
-  document.getElementById('cfg-user-id').value = userId;
-  document.getElementById('cfg-api-key').value =
-    window.__ENV__?.DIFY_API_KEY || localStorage.getItem('dify_api_key') || '';
 }
 
 /* ── Login / Logout ── */
@@ -221,9 +144,9 @@ async function sendMessage() {
   if (!query) return;
 
   const proxyEndpoint = window.__ENV__?.DIFY_CHAT_ENDPOINT;
-  const apiKey        = window.__ENV__?.DIFY_API_KEY || localStorage.getItem('dify_api_key') || '';
+  const apiKey        = window.__ENV__?.DIFY_API_KEY || '';
   if (!proxyEndpoint && !apiKey) {
-    alert('Chat API Key が設定されていません。Dify Config カードで入力して「適用」してください。');
+    alert('API Key が設定されていません。サーバーの .env に DIFY_API_KEY を設定してください。');
     return;
   }
 
@@ -231,10 +154,8 @@ async function sendMessage() {
   const headers  = { 'Content-Type': 'application/json' };
   if (!proxyEndpoint && apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
 
-  const inputs = window.difyChatbotConfig?.inputs || {};
-  const user   = window.difyChatbotConfig?.systemVariables?.user_id
-                   || getCookie('dify_tester_user_id')
-                   || 'anonymous';
+  const inputs = { is_logged_in: isLoggedIn() ? 'True' : 'False' };
+  const user   = getCookie('dify_tester_user_id') || 'anonymous';
 
   inputEl.value = '';
   autoResizeChatInput(inputEl);

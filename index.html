@@ -68,29 +68,6 @@
     </div>
   </div>
 
-  <div class="card">
-    <p class="card-title">Dify Config</p>
-    <div class="config-grid">
-      <div class="config-field">
-        <label>inputs (JSON)</label>
-        <textarea id="cfg-inputs" rows="6" spellcheck="false"></textarea>
-      </div>
-      <div class="config-field">
-        <label>systemVariables.user_id</label>
-        <input id="cfg-user-id" type="text" placeholder="（空欄で省略）">
-      </div>
-    </div>
-    <div class="config-field" style="margin-bottom: 14px;">
-      <label>Chat API Key</label>
-      <input id="cfg-api-key" type="password" placeholder="sk-xxxxxxxxxx" autocomplete="off">
-    </div>
-    <div class="config-actions">
-      <button class="btn-apply" onclick="applyConfig()">適用</button>
-      <button class="btn-reset" onclick="resetConversation()">会話リセット</button>
-      <span id="cfg-error" class="config-error">inputs が有効な JSON ではありません</span>
-    </div>
-  </div>
-
   <div class="card" id="chat-card">
     <p class="card-title">Chat</p>
     <div id="chat-messages"></div>
