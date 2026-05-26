@@ -571,7 +571,8 @@
     } catch (e) {}
     document.getElementById('cfg-inputs').value = JSON.stringify(inputs, null, 2);
     document.getElementById('cfg-user-id').value = userId;
-    document.getElementById('cfg-api-key').value = localStorage.getItem('dify_api_key') || '';
+    document.getElementById('cfg-api-key').value =
+      window.__ENV__?.DIFY_API_KEY || localStorage.getItem('dify_api_key') || '';
   }
 
   /* ── Login / Logout ── */
@@ -671,7 +672,7 @@
     const query   = inputEl.value.trim();
     if (!query) return;
 
-    const apiKey = localStorage.getItem('dify_api_key') || '';
+    const apiKey = window.__ENV__?.DIFY_API_KEY || localStorage.getItem('dify_api_key') || '';
     if (!apiKey) {
       alert('Chat API Key が設定されていません。Dify Config カードで入力して「適用」してください。');
       return;
