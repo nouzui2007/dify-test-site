@@ -591,7 +591,7 @@
 
 <script>
   /* ── Chat state ── */
-  const DIFY_CHAT_API = 'https://udify.app/v1/chat-messages';
+  const DIFY_CHAT_API_DIRECT = 'https://api.dify.ai/v1/chat-messages';
   let conversationId         = '';
   let isStreaming             = false;
   let currentAbortController = null;
@@ -672,11 +672,16 @@
     const query   = inputEl.value.trim();
     if (!query) return;
 
-    const apiKey = window.__ENV__?.DIFY_API_KEY || localStorage.getItem('dify_api_key') || '';
-    if (!apiKey) {
+    const proxyEndpoint = window.__ENV__?.DIFY_CHAT_ENDPOINT;
+    const apiKey        = window.__ENV__?.DIFY_API_KEY || localStorage.getItem('dify_api_key') || '';
+    if (!proxyEndpoint && !apiKey) {
       alert('Chat API Key が設定されていません。Dify Config カードで入力して「適用」してください。');
       return;
     }
+
+    const endpoint = proxyEndpoint || DIFY_CHAT_API_DIRECT;
+    const headers  = { 'Content-Type': 'application/json' };
+    if (!proxyEndpoint && apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
 
     const inputs = window.difyChatbotConfig?.inputs || {};
     const user   = window.difyChatbotConfig?.systemVariables?.user_id
@@ -695,12 +700,9 @@
     currentAbortController = new AbortController();
 
     try {
-      const response = await fetch(DIFY_CHAT_API, {
+      const response = await fetch(endpoint, {
         method:  'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type':  'application/json',
-        },
+        headers,
         body: JSON.stringify({
           query,
           response_mode:   'streaming',

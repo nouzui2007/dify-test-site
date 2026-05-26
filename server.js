@@ -1,8 +1,10 @@
-const http = require('http');
-const fs   = require('fs');
-const path = require('path');
+const http  = require('http');
+const https = require('https');
+const fs    = require('fs');
+const path  = require('path');
 
-const PORT = process.env.PORT || 3000;
+const PORT         = process.env.PORT || 3000;
+const DIFY_API_URL = 'https://api.dify.ai/v1/chat-messages';
 
 function loadEnv() {
   try {
@@ -34,8 +36,49 @@ const MIME = {
 
 http.createServer((req, res) => {
   const urlPath = req.url.split('?')[0];
-  const isRoot  = urlPath === '/' || urlPath === '/index.html';
 
+  // ── Proxy: POST /api/proxy/chat-messages ──
+  if (req.method === 'POST' && urlPath === '/api/proxy/chat-messages') {
+    const env    = loadEnv();
+    const apiKey = env.DIFY_API_KEY || '';
+
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      const buf     = Buffer.from(body);
+      const target  = new URL(DIFY_API_URL);
+      const options = {
+        hostname: target.hostname,
+        path:     target.pathname,
+        method:   'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type':  'application/json',
+          'Content-Length': buf.length,
+        },
+      };
+
+      const proxyReq = https.request(options, proxyRes => {
+        res.writeHead(proxyRes.statusCode, {
+          'Content-Type':  proxyRes.headers['content-type'] || 'text/event-stream',
+          'Cache-Control': 'no-cache',
+        });
+        proxyRes.pipe(res);
+      });
+
+      proxyReq.on('error', err => {
+        res.writeHead(502);
+        res.end(JSON.stringify({ error: err.message }));
+      });
+
+      proxyReq.write(buf);
+      proxyReq.end();
+    });
+    return;
+  }
+
+  // ── Root: inject __ENV__ ──
+  const isRoot = urlPath === '/' || urlPath === '/index.html';
   if (isRoot) {
     const env = loadEnv();
     let html;
@@ -47,8 +90,11 @@ http.createServer((req, res) => {
       return;
     }
 
-    const exposed = { DIFY_API_KEY: env.DIFY_API_KEY || '' };
-    const inject  = `<script>window.__ENV__ = ${JSON.stringify(exposed)};</script>`;
+    const exposed = {
+      DIFY_API_KEY:       env.DIFY_API_KEY || '',
+      DIFY_CHAT_ENDPOINT: '/api/proxy/chat-messages',
+    };
+    const inject = `<script>window.__ENV__ = ${JSON.stringify(exposed)};</script>`;
     html = html.replace('</head>', inject + '\n</head>');
 
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
@@ -56,6 +102,7 @@ http.createServer((req, res) => {
     return;
   }
 
+  // ── Static files ──
   const filePath = path.join(__dirname, urlPath);
   const ext      = path.extname(filePath);
   try {
