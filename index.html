@@ -34,6 +34,23 @@
     })();
   </script>
   <script src="https://udify.app/embed.min.js" id="zjGMPbx4WpS2RhER" defer></script>
+  <!-- Markdown + Code highlight -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11/highlight.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      marked.setOptions({
+        highlight: function(code, lang) {
+          const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+          return hljs.highlight(code, { language }).value;
+        },
+        langPrefix: 'hljs language-',
+        breaks: true,
+      });
+    });
+  </script>
+
   <style>
     #dify-chatbot-bubble-button { background-color: #1C64F2 !important; }
     #dify-chatbot-bubble-window { width: 24rem !important; height: 40rem !important; }
@@ -240,6 +257,131 @@
     }
 
     .config-error.visible { display: block; }
+
+    /* ── Chat card ── */
+    #chat-card { display: flex; flex-direction: column; gap: 12px; }
+
+    #chat-messages {
+      max-height: 480px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 4px 0;
+    }
+
+    #chat-messages::-webkit-scrollbar { width: 4px; }
+    #chat-messages::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
+
+    .chat-bubble {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+
+    .chat-bubble.user {
+      align-self: flex-end;
+      background: #6c63ff;
+      color: #fff;
+      border-bottom-right-radius: 3px;
+      white-space: pre-wrap;
+    }
+
+    .chat-bubble.assistant {
+      align-self: flex-start;
+      background: #f0f2f5;
+      color: #333;
+      border-bottom-left-radius: 3px;
+    }
+
+    .chat-bubble.assistant p  { margin: 0 0 8px; }
+    .chat-bubble.assistant p:last-child { margin-bottom: 0; }
+    .chat-bubble.assistant ul,
+    .chat-bubble.assistant ol { padding-left: 1.4em; margin: 4px 0 8px; }
+    .chat-bubble.assistant li { margin-bottom: 2px; }
+    .chat-bubble.assistant h1,
+    .chat-bubble.assistant h2,
+    .chat-bubble.assistant h3 { margin: 8px 0 4px; font-size: 1em; }
+    .chat-bubble.assistant a  { color: #6c63ff; }
+    .chat-bubble.assistant code {
+      background: #e8eaf6;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-family: monospace;
+    }
+    .chat-bubble.assistant pre {
+      background: #f6f8fa;
+      border: 1px solid #e1e4e8;
+      border-radius: 6px;
+      padding: 10px 14px;
+      overflow-x: auto;
+      margin: 6px 0;
+    }
+    .chat-bubble.assistant pre code {
+      background: none;
+      padding: 0;
+      font-size: 12px;
+    }
+
+    .chat-thinking {
+      align-self: flex-start;
+      display: flex;
+      gap: 5px;
+      padding: 10px 14px;
+    }
+    .chat-thinking span {
+      width: 7px; height: 7px;
+      background: #9ca3af;
+      border-radius: 50%;
+      animation: bounce 1s infinite ease-in-out;
+    }
+    .chat-thinking span:nth-child(1) { animation-delay: 0s; }
+    .chat-thinking span:nth-child(2) { animation-delay: 0.15s; }
+    .chat-thinking span:nth-child(3) { animation-delay: 0.30s; }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+      40%           { transform: translateY(-6px); opacity: 1; }
+    }
+
+    .chat-input-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .chat-input-row textarea {
+      flex: 1;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: none;
+      outline: none;
+      overflow-y: hidden;
+      min-height: 38px;
+      max-height: 120px;
+      transition: border-color 0.15s;
+    }
+    .chat-input-row textarea:focus { border-color: #6c63ff; }
+
+    .chat-footer {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .chat-conv-id {
+      font-size: 11px;
+      font-family: monospace;
+      color: #9ca3af;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   </style>
 </head>
 <body>
@@ -279,10 +421,33 @@
         <input id="cfg-user-id" type="text" placeholder="（空欄で省略）">
       </div>
     </div>
+    <div class="config-field" style="margin-bottom: 14px;">
+      <label>Chat API Key</label>
+      <input id="cfg-api-key" type="password" placeholder="sk-xxxxxxxxxx" autocomplete="off">
+    </div>
     <div class="config-actions">
       <button class="btn-apply" onclick="applyConfig()">適用</button>
       <button class="btn-reset" onclick="resetConversation()">会話リセット</button>
       <span id="cfg-error" class="config-error">inputs が有効な JSON ではありません</span>
+    </div>
+  </div>
+
+  <div class="card" id="chat-card">
+    <p class="card-title">Chat</p>
+    <div id="chat-messages"></div>
+    <div id="chat-thinking" class="chat-thinking" style="display:none">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="chat-input-row">
+      <textarea id="chat-input" rows="1"
+                placeholder="メッセージを入力… (Shift+Enter で改行)"
+                oninput="autoResizeChatInput(this)"
+                onkeydown="handleChatKey(event)"></textarea>
+      <button class="btn-apply" id="chat-send-btn" onclick="sendMessage()">送信</button>
+    </div>
+    <div class="chat-footer">
+      <button class="btn-reset" onclick="resetChat()">会話リセット</button>
+      <span id="chat-conv-id" class="chat-conv-id"></span>
     </div>
   </div>
 </main>
@@ -334,6 +499,7 @@
     const currentInputs = window.difyChatbotConfig ? { ...window.difyChatbotConfig.inputs } : {};
     setupDifyConfig({ inputs: currentInputs, userId: sessionUserId });
     updateDifyEmbed();
+    if (typeof resetChat === 'function') resetChat();
     // location.reload();
   }
 
@@ -362,6 +528,10 @@
       deleteCookie('dify_tester_user_id');
     }
 
+    const apiKey = document.getElementById('cfg-api-key').value.trim();
+    if (apiKey) localStorage.setItem('dify_api_key', apiKey);
+
+    if (typeof resetChat === 'function') resetChat();
     setupDifyConfig({ inputs, userId });
     updateDifyEmbed();
     // location.reload();
@@ -401,6 +571,7 @@
     } catch (e) {}
     document.getElementById('cfg-inputs').value = JSON.stringify(inputs, null, 2);
     document.getElementById('cfg-user-id').value = userId;
+    document.getElementById('cfg-api-key').value = localStorage.getItem('dify_api_key') || '';
   }
 
   /* ── Login / Logout ── */
@@ -416,5 +587,200 @@
   updateUI();
 </script>
 
+
+<script>
+  /* ── Chat state ── */
+  const DIFY_CHAT_API = 'https://udify.app/v1/chat-messages';
+  let conversationId         = '';
+  let isStreaming             = false;
+  let currentAbortController = null;
+
+  /* ── Input auto-resize ── */
+  function autoResizeChatInput(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
+  function handleChatKey(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      sendMessage();
+    }
+  }
+
+  /* ── Scroll ── */
+  function scrollToBottom() {
+    const container = document.getElementById('chat-messages');
+    container.scrollTop = container.scrollHeight;
+  }
+
+  /* ── Markdown render ── */
+  function renderMarkdown(text) {
+    try {
+      return marked.parse(text);
+    } catch (e) {
+      return text.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    }
+  }
+
+  /* ── Message DOM helpers ── */
+  function appendUserMessage(text) {
+    const container = document.getElementById('chat-messages');
+    const bubble    = document.createElement('div');
+    bubble.className   = 'chat-bubble user';
+    bubble.textContent = text;
+    container.appendChild(bubble);
+    scrollToBottom();
+  }
+
+  function appendAssistantBubble() {
+    const container = document.getElementById('chat-messages');
+    const bubble    = document.createElement('div');
+    bubble.className   = 'chat-bubble assistant';
+    bubble.dataset.raw = '';
+    container.appendChild(bubble);
+    scrollToBottom();
+    return bubble;
+  }
+
+  function updateAssistantBubble(bubble, rawText) {
+    bubble.dataset.raw = rawText;
+    bubble.innerHTML   = renderMarkdown(rawText);
+    bubble.querySelectorAll('pre code').forEach(block => {
+      if (!block.dataset.highlighted) {
+        hljs.highlightElement(block);
+        block.dataset.highlighted = 'yes';
+      }
+    });
+    scrollToBottom();
+  }
+
+  /* ── Streaming state ── */
+  function setStreamingState(active) {
+    isStreaming = active;
+    document.getElementById('chat-thinking').style.display = active ? 'flex' : 'none';
+    document.getElementById('chat-send-btn').disabled      = active;
+    document.getElementById('chat-input').disabled         = active;
+  }
+
+  /* ── Send message ── */
+  async function sendMessage() {
+    if (isStreaming) return;
+
+    const inputEl = document.getElementById('chat-input');
+    const query   = inputEl.value.trim();
+    if (!query) return;
+
+    const apiKey = localStorage.getItem('dify_api_key') || '';
+    if (!apiKey) {
+      alert('Chat API Key が設定されていません。Dify Config カードで入力して「適用」してください。');
+      return;
+    }
+
+    const inputs = window.difyChatbotConfig?.inputs || {};
+    const user   = window.difyChatbotConfig?.systemVariables?.user_id
+                     || getCookie('dify_tester_user_id')
+                     || 'anonymous';
+
+    inputEl.value = '';
+    autoResizeChatInput(inputEl);
+
+    appendUserMessage(query);
+    setStreamingState(true);
+
+    const assistantBubble = appendAssistantBubble();
+    let   accumulated     = '';
+
+    currentAbortController = new AbortController();
+
+    try {
+      const response = await fetch(DIFY_CHAT_API, {
+        method:  'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type':  'application/json',
+        },
+        body: JSON.stringify({
+          query,
+          response_mode:   'streaming',
+          user,
+          conversation_id: conversationId,
+          inputs,
+        }),
+        signal: currentAbortController.signal,
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errText}`);
+      }
+
+      const reader  = response.body.getReader();
+      const decoder = new TextDecoder();
+      let   buffer  = '';
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const jsonStr = line.slice(6).trim();
+          if (!jsonStr || jsonStr === '[DONE]') continue;
+
+          let evt;
+          try { evt = JSON.parse(jsonStr); } catch { continue; }
+
+          if (evt.event === 'message' && evt.answer != null) {
+            accumulated += evt.answer;
+            updateAssistantBubble(assistantBubble, accumulated);
+          }
+
+          if (evt.event === 'message_end') {
+            if (evt.conversation_id) {
+              conversationId = evt.conversation_id;
+              document.getElementById('chat-conv-id').textContent =
+                'conv: ' + conversationId;
+            }
+            updateAssistantBubble(assistantBubble, accumulated);
+          }
+
+          if (evt.event === 'error') {
+            throw new Error(evt.message || 'Dify API error');
+          }
+        }
+      }
+
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        assistantBubble.innerHTML =
+          `<span style="color:#ef4444">エラー: ${err.message}</span>`;
+        console.error('[DifyChat]', err);
+      }
+    } finally {
+      setStreamingState(false);
+      currentAbortController = null;
+    }
+  }
+
+  /* ── Reset chat ── */
+  function resetChat() {
+    if (currentAbortController) {
+      currentAbortController.abort();
+      currentAbortController = null;
+    }
+    conversationId = '';
+    isStreaming    = false;
+    document.getElementById('chat-messages').innerHTML  = '';
+    document.getElementById('chat-conv-id').textContent = '';
+    document.getElementById('chat-thinking').style.display = 'none';
+    document.getElementById('chat-send-btn').disabled      = false;
+    document.getElementById('chat-input').disabled         = false;
+  }
+</script>
 </body>
 </html>
