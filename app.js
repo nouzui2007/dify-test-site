@@ -62,8 +62,7 @@ function toggleLogin() {
 updateUI();
 
 /* ── Chat state ── */
-const DIFY_CHAT_API_DIRECT = 'https://api.dify.ai/v1/chat-messages';
-let conversationId         = '';
+let conversationId = '';
 let isStreaming             = false;
 let currentAbortController = null;
 
@@ -143,16 +142,8 @@ async function sendMessage() {
   const query   = inputEl.value.trim();
   if (!query) return;
 
-  const proxyEndpoint = window.__ENV__?.DIFY_CHAT_ENDPOINT;
-  const apiKey        = window.__ENV__?.DIFY_API_KEY || '';
-  if (!proxyEndpoint && !apiKey) {
-    alert('API Key が設定されていません。サーバーの .env に DIFY_API_KEY を設定してください。');
-    return;
-  }
-
-  const endpoint = proxyEndpoint || DIFY_CHAT_API_DIRECT;
+  const endpoint = '/api/chat';
   const headers  = { 'Content-Type': 'application/json' };
-  if (!proxyEndpoint && apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
 
   const inputs = { is_logged_in: isLoggedIn() ? 'True' : 'False' };
   const user   = getCookie('dify_tester_user_id') || 'anonymous';

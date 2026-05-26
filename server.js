@@ -37,8 +37,8 @@ const MIME = {
 http.createServer((req, res) => {
   const urlPath = req.url.split('?')[0];
 
-  // ── Proxy: POST /api/proxy/chat-messages ──
-  if (req.method === 'POST' && urlPath === '/api/proxy/chat-messages') {
+  // ── Proxy: POST /api/chat ──
+  if (req.method === 'POST' && urlPath === '/api/chat') {
     const env    = loadEnv();
     const apiKey = env.DIFY_API_KEY || '';
 
@@ -77,10 +77,9 @@ http.createServer((req, res) => {
     return;
   }
 
-  // ── Root: inject __ENV__ ──
+  // ── Root ──
   const isRoot = urlPath === '/' || urlPath === '/index.html';
   if (isRoot) {
-    const env = loadEnv();
     let html;
     try {
       html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
@@ -89,13 +88,6 @@ http.createServer((req, res) => {
       res.end('Failed to read index.html');
       return;
     }
-
-    const exposed = {
-      DIFY_API_KEY:       env.DIFY_API_KEY || '',
-      DIFY_CHAT_ENDPOINT: '/api/proxy/chat-messages',
-    };
-    const inject = `<script>window.__ENV__ = ${JSON.stringify(exposed)};</script>`;
-    html = html.replace('</head>', inject + '\n</head>');
 
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(html);
