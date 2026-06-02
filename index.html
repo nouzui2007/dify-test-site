@@ -5,22 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dify Tester</title>
 
-  <script>
-    function getCookie(name) {
-      const key = encodeURIComponent(name) + '=';
-      for (const part of document.cookie.split('; ')) {
-        if (part.startsWith(key)) return decodeURIComponent(part.slice(key.length));
-      }
-      return null;
-    }
-  </script>
+  <link rel="stylesheet" href="auth.css">
 
   <!-- Markdown + Code highlight (CDN) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github.min.css">
   <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/highlight.js@11/highlight.min.js"></script>
 
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="chat-style.css">
 </head>
 <body>
 
@@ -35,15 +27,9 @@
 <main>
   <div class="card">
     <p class="card-title">現在の状態</p>
-    <div class="state-grid">
-      <div class="state-item">
-        <label>ログイン状態</label>
-        <div id="state-login" class="state-value"></div>
-      </div>
-      <div class="state-item">
-        <label>systemVariables.user_id</label>
-        <div id="state-user" class="state-value"></div>
-      </div>
+    <div class="state-item">
+      <label>ログイン状態</label>
+      <div id="state-login" class="state-value"></div>
     </div>
   </div>
 
@@ -76,7 +62,18 @@
 
 </main>
 
-<!-- 製造したスクリプト -->
-<script src="app.js"></script>
+<script src="auth.js"></script>
+<script>
+  /* ── サンプルログイン動作 ── */
+  function toggleLogin() {
+    if (isLoggedIn()) {
+      deleteCookie('ckan');
+    } else {
+      setCookie('ckan', '.eJw9jsFqAzEMRP_F5y5YtizbuRUKJf8QCLIkk5BkEza7UCj99zoUepwZ5vG-3VGeSz-u94vNbueg1VB8TJqTeozB-yiIvRUMgYonIfASW3Vv7tgXe57cbl02G-ms467SCnTIHiEoSuyVJEPnwhyoFa0pmrFCzEyZLeYcTXPoJClpyRi0W4Doe2paKQU18VAxeRDA1HJlU_AJe0QVqlpIrRkVAEIMUl5aD1tuPNu8_qttT1v-_HpLlSHp5H3wE3KPUxnAiTR07iCkEQeD230bd_e-_9x_jCyXAfxap6vyY3rRxna68eW8yek89r5drzPfbNSHLQfKhy1BSe7nF7vsZd0.ahemWg.7gnWyk2KWJ_u0fvqucgMBjorAUs', 7);
+    }
+    location.reload();
+  }
+</script>
+<script src="chat-app.js"></script>
 </body>
 </html>

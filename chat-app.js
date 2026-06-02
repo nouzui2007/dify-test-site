@@ -8,61 +8,8 @@ marked.setOptions({
   breaks: true,
 });
 
-/* ── Cookie helpers ── */
-function setCookie(name, value, days) {
-  const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
-}
-
-function deleteCookie(name) {
-  document.cookie = `${encodeURIComponent(name)}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`;
-}
-
-function isLoggedIn() {
-  return getCookie('dify_tester_auth') === 'true';
-}
-
-/* ── UI update ── */
-function updateUI() {
-  const loggedIn = isLoggedIn();
-  const userId   = getCookie('dify_tester_user_id') || '';
-
-  const badge      = document.getElementById('status-badge');
-  const btn        = document.getElementById('auth-btn');
-  const stateLogin = document.getElementById('state-login');
-  const stateUser  = document.getElementById('state-user');
-
-  badge.textContent = loggedIn ? 'ログイン済み' : '未ログイン';
-  badge.className   = `status-badge ${loggedIn ? 'logged-in' : 'logged-out'}`;
-  btn.textContent   = loggedIn ? 'ログアウト' : 'ログイン';
-  btn.className     = `btn ${loggedIn ? 'btn-logout' : 'btn-login'}`;
-
-  stateLogin.textContent = loggedIn ? 'ログイン済み' : '未ログイン';
-  stateLogin.className   = `state-value ${loggedIn ? 'is-logged-in' : 'is-logged-out'}`;
-
-  if (userId) {
-    stateUser.textContent = `"${userId}"`;
-    stateUser.className   = 'state-value is-user';
-  } else {
-    stateUser.textContent = 'なし（未送信）';
-    stateUser.className   = 'state-value is-none';
-  }
-}
-
-/* ── Login / Logout ── */
-function toggleLogin() {
-  if (isLoggedIn()) {
-    deleteCookie('dify_tester_auth');
-  } else {
-    setCookie('dify_tester_auth', 'true', 7);
-  }
-  location.reload();
-}
-
-updateUI();
-
 /* ── Chat state ── */
-let conversationId = '';
+let conversationId         = '';
 let isStreaming             = false;
 let currentAbortController = null;
 
@@ -146,7 +93,7 @@ async function sendMessage() {
   const headers  = { 'Content-Type': 'application/json' };
 
   const inputs = { is_logged_in: isLoggedIn() ? 'True' : 'False' };
-  const user   = getCookie('dify_tester_user_id') || 'anonymous';
+  const user   = 'anonymous';
 
   inputEl.value = '';
   autoResizeChatInput(inputEl);
@@ -222,7 +169,7 @@ async function sendMessage() {
     if (err.name !== 'AbortError') {
       assistantBubble.innerHTML =
         `<span style="color:#ef4444">エラー: ${err.message}</span>`;
-      console.error('[DifyChat]', err);
+      console.error('[Chat]', err);
     }
   } finally {
     setStreamingState(false);
