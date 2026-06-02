@@ -20,21 +20,3 @@ function isLoggedIn() {
   return getCookie('ckan') !== null;
 }
 
-/* ── UI ── */
-function updateUI() {
-  const loggedIn = isLoggedIn();
-
-  const badge      = document.getElementById('status-badge');
-  const btn        = document.getElementById('auth-btn');
-  const stateLogin = document.getElementById('state-login');
-
-  badge.textContent = loggedIn ? 'ログイン済み' : '未ログイン';
-  badge.className   = `status-badge ${loggedIn ? 'logged-in' : 'logged-out'}`;
-  btn.textContent   = loggedIn ? 'ログアウト' : 'ログイン';
-  btn.className     = `btn ${loggedIn ? 'btn-logout' : 'btn-login'}`;
-
-  stateLogin.textContent = loggedIn ? 'ログイン済み' : '未ログイン';
-  stateLogin.className   = `state-value ${loggedIn ? 'is-logged-in' : 'is-logged-out'}`;
-}
-
-updateUI();

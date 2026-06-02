@@ -89,7 +89,7 @@ async function sendMessage() {
   const query   = inputEl.value.trim();
   if (!query) return;
 
-  const endpoint = '/api/chat';
+  const endpoint = window.ChatConfig?.endpoint || '/api/chat';
   const headers  = { 'Content-Type': 'application/json' };
 
   const inputs = { is_logged_in: isLoggedIn() ? 'True' : 'False' };
